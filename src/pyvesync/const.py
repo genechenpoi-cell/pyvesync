@@ -634,13 +634,11 @@ class PurifierFeatures(Features):
         PM1: PM1 level status.
         AQPERCENT: Air quality percentage status.
         RESET_FILTER: Reset filter status.
-        BREATHING_LAMP: Breathing lamp status.
     """
 
     RESET_FILTER = 'reset_filter'
     CHILD_LOCK = 'child_lock'
     NIGHTLIGHT = 'night_light'
-    BREATHING_LAMP = 'breathing_lamp'
     AIR_QUALITY = 'air_quality'
     VENT_ANGLE = 'fan_rotate'
     LIGHT_DETECT = 'light_detect'

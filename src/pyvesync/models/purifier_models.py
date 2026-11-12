@@ -95,8 +95,7 @@ class PurifierSproutResult(InnerPurifierBaseResult):
     VOC: int | None
     CO2: int | None
     errorCode: int
-    nightLight: PurifierNightlight | None = None
-    breathingLamp: PurifierBreathingLamp | None = None
+    nightlight: PurifierNightlight | None = None
     autoPreference: V2AutoPreferences | None = None
 
 
@@ -134,13 +133,6 @@ class PurifierNightlight(ResponseBaseModel):
     nightLightSwitch: bool
     brightness: int
     colorTemperature: int
-
-
-@dataclass
-class PurifierBreathingLamp(ResponseBaseModel):
-    """Purifier Breathing Lamp Response Dict."""
-
-    breathingLampSwitch: int
 
 
 @dataclass

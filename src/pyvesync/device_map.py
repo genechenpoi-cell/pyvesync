@@ -1061,10 +1061,8 @@ purifier_modules: list[PurifierMap] = [
         features=[
             PurifierFeatures.AIR_QUALITY,
             PurifierFeatures.NIGHTLIGHT,
-            PurifierFeatures.BREATHING_LAMP,
         ],
         fan_levels=list(range(1, 4)),
-        nightlight_modes=[NightlightModes.ON, NightlightModes.OFF],
         device_alias='Sprout Air Purifier',
         auto_preferences=[
             PurifierAutoPreference.DEFAULT,

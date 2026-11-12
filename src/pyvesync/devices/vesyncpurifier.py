@@ -874,15 +874,11 @@ class VeSyncAirSprout(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
         self.state.pm25 = details.PM25
         self.state.voc = details.VOC
         self.state.co2 = details.CO2
-        if details.nightLight is not None:
+        if details.nightlight is not None:
             self.state.nightlight_status = DeviceStatus.from_int(
-                details.nightLight.nightLightSwitch
+                details.nightlight.nightLightSwitch
             )
-            self.state.nightlight_brightness = details.nightLight.brightness
-        if details.breathingLamp is not None:
-            self.state.breathing_lamp_status = DeviceStatus.from_int(
-                details.breathingLamp.breathingLampSwitch
-            )
+            self.state.nightlight_brightness = details.nightlight.brightness
 
     async def get_details(self) -> None:
         """Build API V2 Purifier details dictionary."""
@@ -894,39 +890,6 @@ class VeSyncAirSprout(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
             return
 
         self._set_state(r_model)
-
-    async def set_nightlight_mode(self, mode: str) -> bool:
-        if not self.supports_nightlight:
-            _LOGGER.debug('Device does not support night light')
-            return False
-        if mode.lower() not in self.nightlight_modes:
-            _LOGGER.warning('Invalid nightlight mode used (on or off)- %s', mode)
-            return False
-
-        payload_data = {'nightLightSwitch': int(mode.lower() == NightlightModes.ON)}
-        r_dict = await self.call_bypassv2_api('setLightStatus', payload_data)
-        r = Helpers.process_dev_response(_LOGGER, 'set_nightlight_mode', self, r_dict)
-        if r is None:
-            return False
-        self.state.connection_status = ConnectionStatus.ONLINE
-        self.state.nightlight_status = NightlightModes(mode.lower())
-        return True
-
-    async def toggle_breathing_lamp(self, toggle: bool | None = None) -> bool:
-        if not self.supports_breathing_lamp:
-            _LOGGER.debug('Device does not support breathing lamp')
-            return False
-        if toggle is None:
-            toggle = self.state.breathing_lamp_status != DeviceStatus.ON
-
-        payload_data = {'breathingLampSwitch': int(toggle)}
-        r_dict = await self.call_bypassv2_api('setBreathingLampStatus', payload_data)
-        r = Helpers.process_dev_response(_LOGGER, 'toggle_breathing_lamp', self, r_dict)
-        if r is None:
-            return False
-        self.state.connection_status = ConnectionStatus.ONLINE
-        self.state.breathing_lamp_status = DeviceStatus.from_bool(toggle)
-        return True
 
 
 class VeSyncAir131(BypassV1Mixin, VeSyncPurifier):

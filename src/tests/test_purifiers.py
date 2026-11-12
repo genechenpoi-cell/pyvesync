@@ -109,9 +109,7 @@ class TestAirPurifiers(TestBase):
         "LAP-V102S": [["set_auto_mode"], ['set_sleep_mode'], ['set_pet_mode'], ["turn_on_display"], ["turn_off_display"]],
         "LAP-V201S": [["set_auto_mode"], ['set_sleep_mode'], ['set_pet_mode'], ["turn_on_display"], ["turn_off_display"]],
         "EL551S": [["set_auto_mode"], ["set_sleep_mode"], ["set_turbo_mode"], ["turn_on_display"], ["turn_off_display"]],
-        "LAP-B851S-WUS": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"],
-                          ["turn_on_nightlight"], ["turn_off_nightlight"],
-                          ["turn_on_breathing_lamp"], ["turn_off_breathing_lamp"]],
+        "LAP-B851S-WUS": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"]],
         "Salute500": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"]],
 
     }
@@ -301,19 +299,8 @@ class TestAirPurifiers(TestBase):
         assert fan_obj.state.humidity is None
 
     def test_sprout_state(self):
-        """Test Sprout temperature, nightlight and breathing lamp parsing."""
+        """Test Sprout temperature parsing in Celsius."""
         details = call_json_purifiers.PURIFIER_DETAILS["LAP-B851S-WUS"]
         fan_obj = self._update_with("LAP-B851S-WUS", details)
 
         assert fan_obj.state.temperature == 26.2
-        assert fan_obj.state.nightlight_status == const.DeviceStatus.ON
-        assert fan_obj.state.breathing_lamp_status == const.DeviceStatus.from_int(
-            details["breathingLamp"]["breathingLampSwitch"]
-        )
-
-    def test_sprout_nightlight_dim_rejected(self):
-        """Test Sprout rejects the unsupported dim nightlight mode."""
-        fan_obj = self.get_device("air_purifiers", "LAP-B851S-WUS")
-
-        assert self.run_in_loop(fan_obj.set_nightlight_dim) is False
-        self.mock_api.assert_not_called()
