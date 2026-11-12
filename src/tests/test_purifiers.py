@@ -27,11 +27,13 @@ See Also
 """
 
 import logging
+from copy import deepcopy
 import pytest
 
 import pyvesync.const as const
 from pyvesync.base_devices.purifier_base import VeSyncPurifier
 from base_test_cases import TestBase
+from defaults import build_bypass_v2_response
 from utils import assert_test, parse_args
 import call_json_purifiers
 
@@ -107,7 +109,10 @@ class TestAirPurifiers(TestBase):
         "LAP-V102S": [["set_auto_mode"], ['set_sleep_mode'], ['set_pet_mode'], ["turn_on_display"], ["turn_off_display"]],
         "LAP-V201S": [["set_auto_mode"], ['set_sleep_mode'], ['set_pet_mode'], ["turn_on_display"], ["turn_off_display"]],
         "EL551S": [["set_auto_mode"], ["set_sleep_mode"], ["set_turbo_mode"], ["turn_on_display"], ["turn_off_display"]],
-        "LAP-B851S-WUS": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"]],
+        "LAP-B851S-WUS": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"],
+                          ["turn_on_nightlight"], ["turn_off_nightlight"],
+                          ["turn_on_breathing_lamp"], ["turn_off_breathing_lamp"]],
+        "Salute500": [["set_auto_mode"], ['set_sleep_mode'], ["turn_on_display"], ["turn_off_display"]],
 
     }
 
@@ -261,3 +266,54 @@ class TestAirPurifiers(TestBase):
         assert assert_test(
             method_call, all_kwargs, setup_entry, self.write_api, self.overwrite
         )
+
+    def _update_with(self, setup_entry, inner_result):
+        """Return purifier updated from the given getPurifierStatus result."""
+        self.mock_api.return_value = (build_bypass_v2_response(inner_result=inner_result), 200)
+        fan_obj = self.get_device("air_purifiers", setup_entry)
+        self.run_in_loop(fan_obj.update)
+        return fan_obj
+
+    def test_eleva_state(self):
+        """Test Eleva air quality and sensor state parsing."""
+        defaults = call_json_purifiers.PurifierDefaults
+        details = call_json_purifiers.PURIFIER_DETAILS["Salute500"]
+        fan_obj = self._update_with("Salute500", details)
+
+        assert fan_obj.state.air_quality_level == defaults.air_quality_level
+        assert fan_obj.state.pm1 == defaults.pm1
+        assert fan_obj.state.pm25 == defaults.air_quality_value_pm25
+        assert fan_obj.state.pm10 == defaults.pm10
+        assert fan_obj.state.filter_life == defaults.filter_life
+        assert fan_obj.state.voc == defaults.voc
+        assert fan_obj.state.no2 == defaults.no2
+        assert fan_obj.state.humidity == defaults.humidity
+        assert fan_obj.state.temperature == 26.2
+        assert fan_obj.state.child_lock is None
+
+    def test_eleva_state_without_sensor(self):
+        """Test Eleva temperature and humidity of 0 are treated as unavailable."""
+        details = deepcopy(call_json_purifiers.PURIFIER_DETAILS["Salute500"])
+        details.update({"temperature": 0, "humidity": 0})
+        fan_obj = self._update_with("Salute500", details)
+
+        assert fan_obj.state.temperature is None
+        assert fan_obj.state.humidity is None
+
+    def test_sprout_state(self):
+        """Test Sprout temperature, nightlight and breathing lamp parsing."""
+        details = call_json_purifiers.PURIFIER_DETAILS["LAP-B851S-WUS"]
+        fan_obj = self._update_with("LAP-B851S-WUS", details)
+
+        assert fan_obj.state.temperature == 26.2
+        assert fan_obj.state.nightlight_status == const.DeviceStatus.ON
+        assert fan_obj.state.breathing_lamp_status == const.DeviceStatus.from_int(
+            details["breathingLamp"]["breathingLampSwitch"]
+        )
+
+    def test_sprout_nightlight_dim_rejected(self):
+        """Test Sprout rejects the unsupported dim nightlight mode."""
+        fan_obj = self.get_device("air_purifiers", "LAP-B851S-WUS")
+
+        assert self.run_in_loop(fan_obj.set_nightlight_dim) is False
+        self.mock_api.assert_not_called()

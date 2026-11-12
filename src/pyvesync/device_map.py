@@ -1061,8 +1061,10 @@ purifier_modules: list[PurifierMap] = [
         features=[
             PurifierFeatures.AIR_QUALITY,
             PurifierFeatures.NIGHTLIGHT,
+            PurifierFeatures.BREATHING_LAMP,
         ],
         fan_levels=list(range(1, 4)),
+        nightlight_modes=[NightlightModes.ON, NightlightModes.OFF],
         device_alias='Sprout Air Purifier',
         auto_preferences=[
             PurifierAutoPreference.DEFAULT,
@@ -1072,6 +1074,25 @@ purifier_modules: list[PurifierMap] = [
         model_display='Sprout Air Series',
         model_name='Sprout Air',
         setup_entry='LAP-B851S-WUS',
+    ),
+    PurifierMap(
+        class_name='VeSyncAirEleva',
+        dev_types=['LAP-C541S-WUS', 'LAP-C511S-WUS'],
+        modes=[
+            PurifierModes.SLEEP,
+            PurifierModes.MANUAL,
+            PurifierModes.AUTO,
+        ],
+        features=[PurifierFeatures.AIR_QUALITY],
+        fan_levels=list(range(1, 5)),
+        device_alias='Eleva 500',
+        auto_preferences=[
+            PurifierAutoPreference.DEFAULT,
+            PurifierAutoPreference.QUIET,
+        ],
+        model_display='LAP-C512S/C542S Series',
+        model_name='Eleva 500',
+        setup_entry='Salute500',
     ),
 ]
 """List of ['PurifierMap'][pyvesync.device_map.PurifierMap] configuration

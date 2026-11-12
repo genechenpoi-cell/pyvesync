@@ -23,6 +23,7 @@ from pyvesync.models.purifier_models import (
     InnerPurifierBaseResult,
     Purifier131Result,
     PurifierCoreDetailsResult,
+    PurifierElevaResult,
     PurifierRH131Result,
     PurifierSproutResult,
     PurifierV2EventTiming,
@@ -38,7 +39,7 @@ from pyvesync.utils.device_mixins import (
     BypassV2Mixin,
     process_bypassv2_result,
 )
-from pyvesync.utils.helpers import Helpers, Timer
+from pyvesync.utils.helpers import Converters, Helpers, Timer
 
 if TYPE_CHECKING:
     from pyvesync import VeSync
@@ -47,6 +48,11 @@ if TYPE_CHECKING:
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _f10_to_celsius(temperature: int) -> float:
+    """Convert API temperature (Fahrenheit x 10) to Celsius rounded to 0.1."""
+    return round(Converters.temperature_fahrenheit_to_celsius(temperature / 10), 1)
 
 
 class VeSyncAirBypass(BypassV2Mixin, VeSyncPurifier):
@@ -725,6 +731,69 @@ class VeSyncAirBaseV2(VeSyncAirBypass):
         return True
 
 
+class VeSyncAirEleva(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
+    """Class for the Eleva 500X/500Z (Salute 500s) Air Purifier.
+
+    Inherits from VeSyncAirBaseV2 class and overrides the `get_details`
+    and `_set_state` methods. See the
+    [VeSyncAirBaseV2][pyvesync.devices.vesyncpurifier.VeSyncAirBaseV2]
+    class for more information.
+
+    Args:
+        details (dict): Dictionary of device details
+        manager (VeSync): Instantiated VeSync object
+        feature_map (PurifierMap): Device map template
+    """
+
+    __slots__ = ()
+
+    def _set_state(self, details: InnerPurifierBaseResult) -> None:
+        """Set Purifier state from details response."""
+        if not isinstance(details, PurifierElevaResult):
+            _LOGGER.warning('Invalid details model passed to _set_state')
+            return
+        self.state.connection_status = ConnectionStatus.ONLINE
+        self.state.device_status = DeviceStatus.from_int(details.powerSwitch)
+        self.state.mode = details.workMode
+        self.state.filter_life = details.filterLifePercent
+        if details.fanSpeedLevel == 255:  # noqa: PLR2004
+            self.state.fan_level = 0
+        else:
+            self.state.fan_level = details.fanSpeedLevel
+        self.state.fan_set_level = details.manualSpeedLevel
+        self.state.display_set_status = DeviceStatus.from_int(details.screenSwitch)
+        self.state.air_quality_level = details.AQLevel
+        self.state.pm1 = details.PM1
+        self.state.pm25 = details.PM25
+        self.state.pm10 = details.PM10
+        self.state.aq_percent = details.AQI
+        self.state.voc = details.VOC
+        self.state.no2 = details.NO2
+        # Models without a temperature/humidity sensor (500X) report 0
+        self.state.humidity = details.humidity or None
+        if details.temperature:
+            self.state.temperature = _f10_to_celsius(details.temperature)
+        else:
+            self.state.temperature = None
+        auto_pref = details.autoPreference
+        if auto_pref is not None:
+            self.state.auto_preference_type = auto_pref.autoPreferenceType
+            self.state.auto_room_size = auto_pref.roomSize
+        if details.timerRemain:
+            self.state.timer = Timer(details.timerRemain, 'off')
+
+    async def get_details(self) -> None:
+        """Build API V2 Purifier details dictionary."""
+        r_dict = await self.call_bypassv2_api('getPurifierStatus')
+        r_model = process_bypassv2_result(
+            self, _LOGGER, 'get_details', r_dict, PurifierElevaResult
+        )
+        if r_model is None:
+            return
+
+        self._set_state(r_model)
+
+
 class VeSyncAirSprout(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
     """Class for the Sprout Air Purifier.
 
@@ -798,17 +867,22 @@ class VeSyncAirSprout(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
             self.state.auto_preference_type = auto_pref.autoPreferenceType
             self.state.auto_room_size = auto_pref.roomSize
         self.state.humidity = details.humidity
-        self.state.temperature = int((details.temperature or 0) / 10)
+        if details.temperature is not None:
+            self.state.temperature = _f10_to_celsius(details.temperature)
         self.state.pm1 = details.PM1
         self.state.pm10 = details.PM10
         self.state.pm25 = details.PM25
         self.state.voc = details.VOC
         self.state.co2 = details.CO2
-        if details.nightlight is not None:
+        if details.nightLight is not None:
             self.state.nightlight_status = DeviceStatus.from_int(
-                details.nightlight.nightLightSwitch
+                details.nightLight.nightLightSwitch
             )
-            self.state.nightlight_brightness = details.nightlight.brightness
+            self.state.nightlight_brightness = details.nightLight.brightness
+        if details.breathingLamp is not None:
+            self.state.breathing_lamp_status = DeviceStatus.from_int(
+                details.breathingLamp.breathingLampSwitch
+            )
 
     async def get_details(self) -> None:
         """Build API V2 Purifier details dictionary."""
@@ -820,6 +894,39 @@ class VeSyncAirSprout(VeSyncAirBaseV2):  # pylint: disable=too-many-ancestors
             return
 
         self._set_state(r_model)
+
+    async def set_nightlight_mode(self, mode: str) -> bool:
+        if not self.supports_nightlight:
+            _LOGGER.debug('Device does not support night light')
+            return False
+        if mode.lower() not in self.nightlight_modes:
+            _LOGGER.warning('Invalid nightlight mode used (on or off)- %s', mode)
+            return False
+
+        payload_data = {'nightLightSwitch': int(mode.lower() == NightlightModes.ON)}
+        r_dict = await self.call_bypassv2_api('setLightStatus', payload_data)
+        r = Helpers.process_dev_response(_LOGGER, 'set_nightlight_mode', self, r_dict)
+        if r is None:
+            return False
+        self.state.connection_status = ConnectionStatus.ONLINE
+        self.state.nightlight_status = NightlightModes(mode.lower())
+        return True
+
+    async def toggle_breathing_lamp(self, toggle: bool | None = None) -> bool:
+        if not self.supports_breathing_lamp:
+            _LOGGER.debug('Device does not support breathing lamp')
+            return False
+        if toggle is None:
+            toggle = self.state.breathing_lamp_status != DeviceStatus.ON
+
+        payload_data = {'breathingLampSwitch': int(toggle)}
+        r_dict = await self.call_bypassv2_api('setBreathingLampStatus', payload_data)
+        r = Helpers.process_dev_response(_LOGGER, 'toggle_breathing_lamp', self, r_dict)
+        if r is None:
+            return False
+        self.state.connection_status = ConnectionStatus.ONLINE
+        self.state.breathing_lamp_status = DeviceStatus.from_bool(toggle)
+        return True
 
 
 class VeSyncAir131(BypassV1Mixin, VeSyncPurifier):
