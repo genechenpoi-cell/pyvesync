@@ -69,7 +69,7 @@ class V2AutoPreferences:
     """Vital 100S/200S Auto Preferences."""
 
     autoPreferenceType: str
-    roomSize: int
+    roomSize: int | None = None
 
 
 @dataclass
@@ -95,8 +95,36 @@ class PurifierSproutResult(InnerPurifierBaseResult):
     VOC: int | None
     CO2: int | None
     errorCode: int
-    nightlight: PurifierNightlight | None = None
+    nightLight: PurifierNightlight | None = None
+    breathingLamp: PurifierBreathingLamp | None = None
     autoPreference: V2AutoPreferences | None = None
+
+
+@dataclass
+class PurifierElevaResult(InnerPurifierBaseResult):
+    """Eleva 500X/500Z (Salute 500s) Purifier Result Model."""
+
+    powerSwitch: int
+    childLockSwitch: int
+    screenSwitch: int
+    workMode: str
+    filterLifePercent: int
+    errorCodes: list[int]
+    PM25: int | None = None
+    PM1: int | None = None
+    PM10: int | None = None
+    fanSpeedLevel: int | None = None
+    manualSpeedLevel: int | None = None
+    autoPreference: V2AutoPreferences | None = None
+    timerRemain: int | None = None
+    AQI: int | None = None
+    AQLevel: int | None = None
+    resetFilterDate: int | None = None
+    totalCleanAir: int | None = None
+    NO2: int | None = None
+    temperature: int | None = None
+    humidity: int | None = None
+    VOC: int | None = None
 
 
 @dataclass
@@ -106,6 +134,13 @@ class PurifierNightlight(ResponseBaseModel):
     nightLightSwitch: bool
     brightness: int
     colorTemperature: int
+
+
+@dataclass
+class PurifierBreathingLamp(ResponseBaseModel):
+    """Purifier Breathing Lamp Response Dict."""
+
+    breathingLampSwitch: int
 
 
 @dataclass

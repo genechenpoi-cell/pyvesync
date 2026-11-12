@@ -76,6 +76,7 @@ class PurifierDefaults:
     rotate_angle = 45
     voc = 120
     co2 = 669
+    no2 = 1
     temperature = 791
 
 
@@ -304,6 +305,29 @@ PURIFIER_DETAILS: dict[str, dict[str, Any]] = {
         },
         "guardingInfo": {"guarding": 0, "remainTS": 100},
     },
+    "Salute500": {  # Eleva 500X/500Z
+        "powerSwitch": int(DeviceStatus.ON),
+        "childLockSwitch": int(PurifierDefaults.child_lock),
+        "screenSwitch": int(PurifierDefaults.display_config),
+        "workMode": PurifierDefaults.purifier_mode,
+        "filterLifePercent": PurifierDefaults.filter_life,
+        "errorCodes": [],
+        "PM25": PurifierDefaults.air_quality_value_pm25,
+        "PM1": PurifierDefaults.pm1,
+        "PM10": PurifierDefaults.pm10,
+        "fanSpeedLevel": PurifierDefaults.fan_level,
+        "manualSpeedLevel": PurifierDefaults.fan_set_level,
+        "autoPreference": {"autoPreferenceType": "default", "roomSize": 0},
+        "timerRemain": 0,
+        "AQI": PurifierDefaults.aq_percent,
+        "AQLevel": PurifierDefaults.air_quality_level,
+        "resetFilterDate": 0,
+        "totalCleanAir": 0,
+        "NO2": PurifierDefaults.no2,
+        "temperature": PurifierDefaults.temperature,
+        "humidity": PurifierDefaults.humidity,
+        "VOC": PurifierDefaults.voc,
+    },
 }
 
 
@@ -318,6 +342,7 @@ DETAILS_RESPONSES = {
     "LAP-V201S": build_bypass_v2_response(inner_result=PURIFIER_DETAILS["LAP-V201S"]),
     "EL551S": build_bypass_v2_response(inner_result=PURIFIER_DETAILS["EL551S"]),
     "LAP-B851S-WUS": build_bypass_v2_response(inner_result=PURIFIER_DETAILS["LAP-B851S-WUS"]),
+    "Salute500": build_bypass_v2_response(inner_result=PURIFIER_DETAILS["Salute500"]),
 }
 
 FunctionResponses.default_factory = lambda: (
@@ -341,6 +366,7 @@ METHOD_RESPONSES = {
     "LAP-V201S": deepcopy(FunctionResponsesV2),
     "EL551S": deepcopy(FunctionResponsesV2),
     "LAP-B851S-WUS": deepcopy(FunctionResponsesV2),
+    "Salute500": deepcopy(FunctionResponsesV2),
 }
 
 # Add responses for methods with different responses than the default

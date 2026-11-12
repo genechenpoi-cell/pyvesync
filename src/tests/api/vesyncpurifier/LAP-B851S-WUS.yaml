@@ -138,6 +138,33 @@ turn_off:
     userCountryCode: US
   method: post
   url: /cloud/v2/deviceManaged/bypassV2
+turn_off_breathing_lamp:
+  headers:
+    Content-Type: application/json; charset=UTF-8
+    User-Agent: okhttp/3.12.1
+  json_object:
+    acceptLanguage: en
+    accountID: sample_id
+    appVersion: 5.6.60
+    cid: LAP-B851S-WUS-CID
+    configModel: ConfigModule
+    configModule: ConfigModule
+    debugMode: false
+    deviceId: LAP-B851S-WUS-CID
+    method: bypassV2
+    payload:
+      data:
+        breathingLampSwitch: 0
+      method: setBreathingLampStatus
+      source: APP
+    phoneBrand: pyvesync
+    phoneOS: Android
+    timeZone: America/New_York
+    token: sample_tk
+    traceId: TRACE_ID
+    userCountryCode: US
+  method: post
+  url: /cloud/v2/deviceManaged/bypassV2
 turn_off_display:
   headers:
     Content-Type: application/json; charset=UTF-8
@@ -156,6 +183,33 @@ turn_off_display:
       data:
         screenSwitch: 0
       method: setDisplay
+      source: APP
+    phoneBrand: pyvesync
+    phoneOS: Android
+    timeZone: America/New_York
+    token: sample_tk
+    traceId: TRACE_ID
+    userCountryCode: US
+  method: post
+  url: /cloud/v2/deviceManaged/bypassV2
+turn_off_nightlight:
+  headers:
+    Content-Type: application/json; charset=UTF-8
+    User-Agent: okhttp/3.12.1
+  json_object:
+    acceptLanguage: en
+    accountID: sample_id
+    appVersion: 5.6.60
+    cid: LAP-B851S-WUS-CID
+    configModel: ConfigModule
+    configModule: ConfigModule
+    debugMode: false
+    deviceId: LAP-B851S-WUS-CID
+    method: bypassV2
+    payload:
+      data:
+        nightLightSwitch: 0
+      method: setLightStatus
       source: APP
     phoneBrand: pyvesync
     phoneOS: Android
@@ -193,6 +247,33 @@ turn_on:
     userCountryCode: US
   method: post
   url: /cloud/v2/deviceManaged/bypassV2
+turn_on_breathing_lamp:
+  headers:
+    Content-Type: application/json; charset=UTF-8
+    User-Agent: okhttp/3.12.1
+  json_object:
+    acceptLanguage: en
+    accountID: sample_id
+    appVersion: 5.6.60
+    cid: LAP-B851S-WUS-CID
+    configModel: ConfigModule
+    configModule: ConfigModule
+    debugMode: false
+    deviceId: LAP-B851S-WUS-CID
+    method: bypassV2
+    payload:
+      data:
+        breathingLampSwitch: 1
+      method: setBreathingLampStatus
+      source: APP
+    phoneBrand: pyvesync
+    phoneOS: Android
+    timeZone: America/New_York
+    token: sample_tk
+    traceId: TRACE_ID
+    userCountryCode: US
+  method: post
+  url: /cloud/v2/deviceManaged/bypassV2
 turn_on_display:
   headers:
     Content-Type: application/json; charset=UTF-8
@@ -211,6 +292,33 @@ turn_on_display:
       data:
         screenSwitch: 1
       method: setDisplay
+      source: APP
+    phoneBrand: pyvesync
+    phoneOS: Android
+    timeZone: America/New_York
+    token: sample_tk
+    traceId: TRACE_ID
+    userCountryCode: US
+  method: post
+  url: /cloud/v2/deviceManaged/bypassV2
+turn_on_nightlight:
+  headers:
+    Content-Type: application/json; charset=UTF-8
+    User-Agent: okhttp/3.12.1
+  json_object:
+    acceptLanguage: en
+    accountID: sample_id
+    appVersion: 5.6.60
+    cid: LAP-B851S-WUS-CID
+    configModel: ConfigModule
+    configModule: ConfigModule
+    debugMode: false
+    deviceId: LAP-B851S-WUS-CID
+    method: bypassV2
+    payload:
+      data:
+        nightLightSwitch: 1
+      method: setLightStatus
       source: APP
     phoneBrand: pyvesync
     phoneOS: Android

@@ -56,11 +56,13 @@ class PurifierState(DeviceState):
         light_detection_status (str): Light detection status of the purifier.
         nightlight_status (str): Nightlight status of the purifier.
         fan_rotate_angle (int): Fan rotate angle of the purifier.
-        temperature (int): Temperature value of the purifier.
+        temperature (float): Temperature value of the purifier in Celsius.
         humidity (int): Humidity value of the purifier.
         voc (int): VOC value of the purifier.
         co2 (int): CO2 value of the purifier.
+        no2 (int): NO2 value of the purifier.
         nightlight_brightness (int): Nightlight brightness level of the purifier.
+        breathing_lamp_status (str): Breathing lamp status of the purifier.
 
     Note:
         Not all attributes are supported by all models.
@@ -71,6 +73,7 @@ class PurifierState(DeviceState):
         'aq_percent',
         'auto_preference_type',
         'auto_room_size',
+        'breathing_lamp_status',
         'child_lock',
         'co2',
         'display_forever',
@@ -87,6 +90,7 @@ class PurifierState(DeviceState):
         'mode',
         'nightlight_brightness',
         'nightlight_status',
+        'no2',
         'pm1',
         'pm10',
         'pm25',
@@ -115,7 +119,7 @@ class PurifierState(DeviceState):
         self.display_set_status: str | None = None
         self.display_forever: bool = False
         self.humidity: int | None = None
-        self.temperature: int | None = None
+        self.temperature: float | None = None
         # Attributes not supported by all purifiers
         self.pm25: int | None = None
         self.pm1: int | None = None
@@ -123,10 +127,12 @@ class PurifierState(DeviceState):
         self.aq_percent: int | None = None
         self.voc: int | None = None
         self.co2: int | None = None
+        self.no2: int | None = None
         self.light_detection_switch: str | None = None
         self.light_detection_status: str | None = None
         self.nightlight_brightness: int | None = None
         self.nightlight_status: str | None = None
+        self.breathing_lamp_status: str | None = None
         self.fan_rotate_angle: int | None = None
 
     @property
@@ -276,6 +282,11 @@ class VeSyncPurifier(VeSyncBaseToggleDevice):
         """Returns True if device supports light detection."""
         return PurifierFeatures.LIGHT_DETECT in self.features
 
+    @property
+    def supports_breathing_lamp(self) -> bool:
+        """Return True if device supports breathing lamp."""
+        return PurifierFeatures.BREATHING_LAMP in self.features
+
     async def toggle_display(self, mode: bool) -> bool:
         """Set Display Mode."""
         del mode
@@ -318,6 +329,30 @@ class VeSyncPurifier(VeSyncBaseToggleDevice):
     async def turn_off_nightlight(self) -> bool:
         """Turn off Nightlight."""
         return await self.set_nightlight_mode(NightlightModes.OFF)
+
+    async def toggle_breathing_lamp(self, toggle: bool | None = None) -> bool:
+        """Toggle Breathing Lamp.
+
+        Args:
+            toggle (bool | None): Toggle breathing lamp. If None, toggle state.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        del toggle
+        if not self.supports_breathing_lamp:
+            logger.debug('Breathing lamp not supported for this device.')
+        else:
+            logger.debug('Breathing lamp not configured for this device.')
+        return False
+
+    async def turn_on_breathing_lamp(self) -> bool:
+        """Turn on Breathing Lamp."""
+        return await self.toggle_breathing_lamp(True)
+
+    async def turn_off_breathing_lamp(self) -> bool:
+        """Turn off Breathing Lamp."""
+        return await self.toggle_breathing_lamp(False)
 
     async def toggle_child_lock(self, toggle: bool | None = None) -> bool:
         """Toggle Child Lock (Display Lock).
